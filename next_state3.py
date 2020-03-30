@@ -1,51 +1,27 @@
 import numpy as np
-import ur_data2 as ur
+import ur_data_plus_joints as ur
 import goal_calc2 as goal
 import pickle as pickle
-import data_driven_force_calculator2 as f
+import data_driven_force_calculator3 as f
 
-'''
-	NOTES... Do i need all the offsetting calculations if
-	im only using relative move commands? I think
-	i could just add the offset just before the robot command
-	is sent.
 
-	Need to include some iterative function to get the next
-	iterative position.
-	'''
 
 def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
-	#the argument x_current is the next_x_rel which is the next
-	#position from which the future positions should be calculated.
+
 	print("")
 	print("    Starting state_calc")
 
-	''' this code takes in the robot's current position and user defined goal position, and
-	calculates the distance between them.
-	it then breaks down that distance into intervals and returns the next intervale as an angle
-	and distance which then gets imported into force_calculator.
-	'''
-
 
 	if e == 0:
-		#import current robot position and add to dictionary current_pos.
 
-		x,y  = ur.where_now()
+		j0, j2, j4, j5,e0, e1, e2, e3, e4, e5,v0, v2, v4, v5, x, y  = ur.where_now()#
 
-		#create a dictionary of the current x,y position.
 		current_pos_x = x
 		current_pos_y = y
 
 	else:
 		current_pos_x = x_current
 		current_pos_y = y_current
-
-
-
-	'''This block gets the goal position in x,y and uses it to work out the angle and distance between
-	the current position and the goal.
-	'''
-
 
 	if e == 0:
 		# import user defined goal position.
@@ -57,29 +33,15 @@ def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
 		'''
 		current_pos_x, current_pos_y = ur.base_to_task(current_pos_x, current_pos_y)
 
-	#current_pos_y = current_pos_y *(-1)
-
-	print(("    current_pos_x", current_pos_x))
-	print(("    current_pos_y", current_pos_y))
-
-	'''build new dict to find lengths of opposite and adjacent sides of triangle
-	formed between current position and goal position. These are then used to
-	find the hypotenuse which is the trajectory between the current and goal positions.
-	'''
+	print("    current_pos_x", current_pos_x)
+	print("    current_pos_y", current_pos_y)
 
 	opposite = x_goal - current_pos_x # opposite
-	#opposite = np.abs(opposite)
 	adjacent = y_goal - current_pos_y # adjacent
-	#adjacent = np.abs(adjacent)
 
-	print(("    opposite", opposite))
+	print("    opposite", opposite)
 	adjacent = np.abs(adjacent)
-	print(("    adjacent", adjacent))
-
-	#take absolute values for opp and adj to avoid queer math anomalies.
-	# opposite = np.abs(opposite)
-	# adjacent = np.abs(adjacent)
-
+	print("    adjacent", adjacent)
 
 	# square the opposite and adjacent sides.
 	x_sq = (opposite)**2 #adj^2
@@ -89,7 +51,7 @@ def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
 	#this is needed in order to build a new triangle to feed back into the goal calc.
 	polar_rad = np.sqrt(x_sq + y_sq)
 
-	print(("    polar rad", polar_rad))
+	print("    polar rad", polar_rad)
 	x = opposite
 	y = adjacent
 
@@ -97,7 +59,7 @@ def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
 	'''
 	polar_angle = np.arctan(x/y) # in radians.
 	polar_angle = polar_angle *(180/np.pi) # convert rad to deg.
-	print(("    polar angle", polar_angle))
+	print("    polar angle", polar_angle)
 	polar_angle = np.abs(polar_angle)
 
 	# using  < symbol cus y values are positive due to tan()
@@ -121,21 +83,12 @@ def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
 		print("    Not adjusted")
 
 
-	print(("    adusted polar angle", polar_angle))
-
-
+	print("    adusted polar angle", polar_angle)
 
 
 	# segment the hypotenuse into 10mm intervals.
 	interval =  0.01 #10mm interval  #polar_rad
 
-
-
-	'''This block uses the angle between the current position and the goal to find the
-	x,y of a new interation or step towards the goal. It then determins the angle and
-	distance between the next step and the orifice in order to work out the force
-	applided to a hose when pulled at those values.
-	'''
 
 	x,y = goal.goal_pos_calc(polar_angle, interval)
 
@@ -144,29 +97,9 @@ def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
 	#better to leave sign untill value gets posed to robot.
 
 
-	'''what is the force at this new x,y iteration?
-	'''
-
-	'''ultimately, this scrip returns the angle and distance of the next iterative move
-	which is then fed back to the force_calculator for evaluation.
-
-	Need to return the polar_rad for force-calc because force
-	calcs should be relative to the orifice position.
-	But the angle needs to be between the next iterative position and the orifice,
-	now the next position and the current position. Even though the robot is moving from
-	its current position, the hose is always being pulled from the orifice.
-
-	Home position is 0,0 in the task space.
-	what is the iterative position relative to task space?
-	current position is an absolute relative to the orifice
-	whereas, x,y are only relative to the current pos.
-	By adding these values we get x,y relative to the orifice.
-	now one can calculate the angle and distance between the orifice
-	and the new iterative move.
-	'''
 	# x_rel = next_x_relative_to_orifice
-	print(("    current_pos_x", current_pos_x))
-	print(("    current_pos_y", current_pos_y))
+	print("    current_pos_x", current_pos_x)
+	print("    current_pos_y", current_pos_y)
 
 
 	x = np.abs(x)
@@ -186,8 +119,8 @@ def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
 		print("    y+y")
 
 	#next_y_rel = np.abs(next_y_rel)
-	print(("    next_x_reletive to orifice", next_x_rel))
-	print(("    next_y_reletive to orifice", next_y_rel))
+	print("    next_x_reletive to orifice", next_x_rel)
+	print("    next_y_reletive to orifice", next_y_rel)
 	'''find the angle and distance between iterative step and the orifice by
 	squaring the opposite and adjacent sides.
 	no need for subtracting orifice from next position as
@@ -209,26 +142,9 @@ def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
 
 	polar_angle = np.abs(polar_angle)
 
-	print(("    x_goal y_goal", x_goal, y_goal))
-	print(("    angle ", polar_angle))
+	print("    x_goal y_goal", x_goal, y_goal)
+	print("    angle ", polar_angle)
 
-	# using  < symbol cus y values are positive due to cos()
-	# opperation in goal_calc.
-
-	# if y_goal > next_y_rel and x_goal < next_x_rel:
-	# 	polar_angle = 180 + polar_angle
-	# 	print "1"
-
-
-	# elif next_y_rel < y_goal and x_goal > next_x_rel:
-	# 	polar_angle = 180 - polar_angle
-	# 	print "2"
-
-	# elif x_goal < next_x_rel and y_goal < next_y_rel:
-	# 	polar_angle = 360 - polar_angle
-	# 	print "3"
-
-	# print "adusted polar angle2", polar_angle
 
 	# Pickle everything to avoid circular feferences.
 	pickel_goal = x_goal, y_goal #persistant goal values
@@ -249,12 +165,11 @@ def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
 	with open('pickel_next_move.pickle', "wb") as file6:
 		pickle.dump(pickel_next_move, file6, -1)
 
-	print(("    Return: polar_rad", polar_rad)) # between next step and orifice
-	print(("    Return polar_angle", polar_angle)) # between next step and orifice.
-	print(("    Return x, y", x,y))
-	print(("    Return next steps relative to orifice", next_x_rel, next_y_rel))
-	return polar_rad, polar_angle, x, y, next_x_rel, next_y_rel
-
+	print("    Return: polar_rad", polar_rad) # between next step and orifice
+	print("    Return polar_angle", polar_angle) # between next step and orifice.
+	print("    Return x, y", x,y)
+	print("    Return next steps relative to orifice", next_x_rel, next_y_rel)
+	return  polar_rad, polar_angle, x, y, next_x_rel, next_y_rel
 
 if __name__ == '__main__':
 	state_calc()

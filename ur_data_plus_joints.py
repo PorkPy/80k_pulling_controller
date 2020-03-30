@@ -188,18 +188,94 @@ def where_now():
 		pickle.dump(pose, ur_file, -1)
 
 	#y = np.abs(y)
-	return j0[0],  j1[0], j2[0], j3[0], j4[0], j5[0], e0[0],e1[0],e2[0],e3[0],e4[0],e5[0],v0[0],v1[0],v2[0],v3[0],v4[0],v5[0]
+	return  j0[0], j2[0], j4[0], j5[0], \
+			e0[0], e1[0], e2[0], e3[0], e4[0], e5[0], \
+			v0[0], v2[0], v4[0], v5[0],  x, y
+
 
 
 
 
 if __name__ == '__main__':
-	j0, j1, j2,j3, j4, j5, e0,e1,e2,e3,e4,e5,v0,v1, v2,v3, v4,v5 = where_now()
-	print(j0, j1, j2, j3, j4, j5)
-	import pandas as pd
-	data = [{"j0":j0, "j1":j1, "j2":j2, "j3":j3, "j4":j4, "j5":j5, "e0":e0,"e1":e1,"e2":e2,"e3":e3,
-			"e4":e4,"e5":e5,"v0":v0,"v1":v1,"v2":v2,"v3":v3,"v4":v4,"v5":v5}]
+	j0, j1, j2,j3, j4, j5, e0,e1,e2,e3,e4,e5,v0,v1, v2,v3, v4,v5, x, y, z, Rx, Ry, Rz = where_now()
 
-	data2 = pd.DataFrame(data, columns=["j0", "j1", "j2", "j3", "j4", "j5", "e0","e1","e2","e3","e4","e5","v0","v1","v2","v3","v4","v5"])
-	print(data2)
+
+	# print(x,y,z)
+
+	# xyz = [j0, j1, j2,j3, j4, j5]
+	# #print(xyz)
+	# a= list(map(lambda i:  np.degrees(i), xyz))
+	# print(a)
+
+	# # b = [-1.1833, -0.043, 0.4989]
+	# # c = list(map(lambda i: np.radians(i), b))
+	# # print(c)
+
+
+	# d= [1.570796327,0,0,0,-1.570796327,0]
+	# e = list(map(lambda i:  np.degrees(i), d))
+	# print(e)
+
+	# #print(j0, j1, j2,j3, j4, j5, e0,e1,e2,e3,e4,e5,v0,v1, v2,v3, v4,v5, x, y, z, Rx, Ry, Rz)
+	# import pandas as pd
+
+	# data = [{"j0":j0, "j1":j1, "j2":j2, "j3":j3, "j4":j4, "j5":j5, "e0":e0,"e1":e1,"e2":e2,"e3":e3,
+	# 		"e4":e4,"e5":e5,"v0":v0,"v1":v1,"v2":v2,"v3":v3,"v4":v4,"v5":v5}]
+
+	# data2 = pd.DataFrame(data, columns=["j0", "j1", "j2", "j3", "j4", "j5", "e0","e1","e2","e3","e4","e5","v0","v1","v2","v3","v4","v5"])
+	# #print(data2)
+
+	#45deg 100mm in x 200mm in yfrom home pos 1.630076289176941 -1.0940731207477015 2.293172836303711 -2.75352126756777 -1.5644896666156214 2.9464988708496094
+	#45 deg 500mm in x,y 2.1067750453948975 -0.6923440138446253 1.4165887832641602 -2.28770095506777 -1.5654600302325647 3.4256272315979004
+	# 90deg 700mm 2.525333881378174 -0.9229972998248499 1.885268211364746 -2.5259817282306116 -1.558821980153219 0.6833480000495911
+	# 500mm forward of orifice 1.582170844078064 -0.8024752775775355 1.6697869300842285 -2.4211280981646937 -1.571103874837057 2.900250196456909
+
+
+
+def task_to_base(xxx_todo_changeme= (0,0)):
+
+	# points = (x,y)
+	# x = points[0]
+	# y = points[1]
+	# home_pos_x = 0.3
+	# home_pos_y = 0.65
+	(x,y) = xxx_todo_changeme
+	theta = 0.215
+	origin = 0, 0
+	point = x, y
+	ox, oy = origin
+	px, py = point
+	qx = ox + math.cos(theta) * (px - ox) - math.sin(theta) * (py - oy)
+	qy = oy + math.sin(theta) * (px - ox) + math.cos(theta) * (py - oy)
+	qx += 0.05
+	qy -= 0.463
+	return qx, qy
+
+    #Rotate a point counterclockwise by a given theta around a given origin.
+
+    #The theta should be given in radians.
+
+def base_to_task(x=0, y=0):
+	"""
+	Rotate a point counterclockwise by a given theta around a given origin.
+	The theta should be given in radians.
+	"""
+	print(x[0])
+	print(y[0])
+	x = float(x[0])
+	y = float(y[0])
+	x-=	0.05	#0.05  #  make the offset first then rotate.
+	y+=	0.463	#0.463
+	theta = -0.215 # rotating clockwise from task to base frame.
+	origin = 0,0
+	point = x, y
+	ox, oy = origin
+	px, py = point
+	qx = ox + math.cos(theta) * (px - ox) - math.sin(theta) * (py - oy)
+	qy = oy + math.sin(theta) * (px - ox) + math.cos(theta) * (py - oy)
+
+	# qx -=  1  #0.05
+	# qy +=   1  #0.463
+
+	return qx, qy
 
